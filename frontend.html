@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Analyzer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .label-item {
+            margin: 5px 0;
+        }
+        #preview {
+            max-width: 400px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Analyzer</h1>
+    <input type="file" id="imageInput" accept="image/*">
+    <img id="preview">
+    <div class="results">
+        <h2>Analysis Results</h2>
+        <div id="labels"></div>
+        <h3>Detected Text</h3>
+        <div id="texts"></div>
+    </div>
+
+    <script>
+        document.getElementById('imageInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Show preview
+            const preview = document.getElementById('preview');
+            preview.src = URL.createObjectURL(file);
+
+            // Upload and analyze
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                // Display labels
+                const labelsDiv = document.getElementById('labels');
+                labelsDiv.innerHTML = data.labels
+                    .map(label => `
+                        <div class="label-item">
+                            ${label.description}: ${(label.confidence * 100).toFixed(2)}%
+                        </div>
+                    `)
+                    .join('');
+
+                // Display detected text
+                const textsDiv = document.getElementById('texts');
+                textsDiv.textContent = data.texts;
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
+</body>
+</html>
